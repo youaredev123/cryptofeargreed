@@ -1,0 +1,54 @@
+﻿<!-- ========== Left Sidebar Start ========== -->
+<div class="vertical-menu">
+
+    <div data-simplebar class="h-100">
+
+        <!--- Sidemenu -->
+        <div id="sidebar-menu">
+            <!-- Left Menu Start -->
+            <ul class="metismenu list-unstyled" id="side-menu">
+                <li class="menu-title" key="t-menu">Menu</li>
+
+                <li>
+                    <a href="javascript: void(0);" class="waves-effect">
+                        <i class="bx bx-home-circle"></i><span class="badge badge-pill badge-info float-right">04</span>
+                        <span key="t-dashboards">Dashboards</span>
+                    </a>
+                    <ul class="sub-menu" aria-expanded="false">
+                        @*<li><a href=@Url.Action("Index", "index") key="t-default">Default</a></li>
+                        <li><a href=@Url.Action("Index", "DashboardSaas") key="t-saas">Saas</a></li>*@
+                        <li><a href=@Url.Action("Index", "DashboardCrypto") key="t-crypto">Crypto</a></li>
+                        <li><a href=@Url.Action("Index", "DashboardMeter") key="t-crypto">Crypto Feer Greed</a></li>
+                        @*<li><a href=@Url.Action("Index", "DashboardBlog") key="t-blog">Blog</a></li>*@
+                    </ul>
+                </li>
+
+
+                <li class="menu-title" key="t-apps">Apps</li>
+
+                
+
+                <li>
+                    <a href="javascript: void(0);" class="has-arrow waves-effect">
+                        <i class="bx bx-bitcoin"></i>
+                        <span key="t-crypto">Crypto</span>
+                    </a>
+                    <ul class="sub-menu" aria-expanded="false">
+                        <li><a href=@Url.Action("Index", "CryptoWallet") key="t-wallet">Wallet</a></li>
+                        <li><a href=@Url.Action("Index", "CryptoBuySell") key="t-buy">Buy/Sell</a></li>
+                        <li><a href=@Url.Action("Index", "CryptoExchange") key="t-exchange">Exchange</a></li>
+                        <li><a href=@Url.Action("Index", "CryptoLending") key="t-lending">Lending</a></li>
+                        <li><a href=@Url.Action("Index", "CryptoOrders") key="t-orders">Orders</a></li>
+                        <li><a href=@Url.Action("Index", "CryptoKycApplication") key="t-kyc">KYC Application</a></li>
+                        <li><a href=@Url.Action("Index", "CryptoIcoLanding") key="t-ico">ICO Landing</a></li>
+                    </ul>
+                </li>
+
+             
+
+            </ul>
+        </div>
+        <!-- Sidebar -->
+    </div>
+</div>
+<!-- Left Sidebar End -->

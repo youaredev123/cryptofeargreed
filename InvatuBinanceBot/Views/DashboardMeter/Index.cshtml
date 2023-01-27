@@ -1,0 +1,733 @@
+﻿@using InvatuBinanceBot.Dto
+@model Tuple<List<Dto.MeterModel>, List<Dto.Coin>, Votes>
+@inject Wangkanai.Detection.Services.IDetectionService DetectionService
+@{
+    ViewBag.Title = "Crypto Fear And Greed Index - UPDATED DAILY";
+    ViewBag.pTitle = "Crypto Fear And Greed Index - UPDATED DAILY";
+    ViewBag.pageTitle = "Dashboard";
+    Layout = "~/Views/_Shared/_Layout.cshtml";
+
+}
+<!-- DataTables -->
+<link href="~/assets/libs/datatables.net-bs4/css/dataTables.bootstrap4.min.css" rel="stylesheet" type="text/css" />
+<!-- Responsive datatable examples -->
+<link href="~/assets/libs/datatables.net-responsive-bs4/css/responsive.bootstrap4.min.css" rel="stylesheet" type="text/css" />
+<style>
+    #datatable td {
+        vertical-align: middle;
+    }
+    #datatable td:nth-child(2) {
+        padding-left: 2px;
+        padding-right: 2px;
+        display: flex;
+    }
+    #datatable td:nth-child(3) {
+        padding-left: 2px;
+        padding-right: 2px;
+        font-size: 12px;
+    }
+    #datatable td:nth-child(4) {
+        padding-left: 2px;
+        padding-right: 2px;
+    }
+    .isUp {
+        filter: hue-rotate(85deg) saturate(80%) brightness(0.85);
+    }
+    .isDown {
+        filter: hue-rotate(300deg) saturate(210%) brightness(0.7) contrast(170%);
+    }
+</style>
+<div class="row">
+    <div class="col-xl-12">
+        <div class="row">
+            <div class="col-xl-12">
+                <div class="card">
+                    <div class="card-body">
+                        <p class="mb-0 text-center">
+                            How are you feeling about market today ?
+                            <a class="btnUserEmotion ml-3 btn btn-success waves-effect waves-light" href="javascript:void(0);"><i class="bx bx-up-arrow"></i> Bullish</a> <span class="ml-2"><strong><span class="bullish-count">@Model.Item3.BullishCount</span> Vote</strong></span>
+                            <a class="btnUserEmotion ml-2 btn btn-danger waves-effect waves-light" href="javascript:void(0)"><i class="bx bx-down-arrow"></i> Bearish</a> <span class="ml-2"><strong><span class="bearish-count">@Model.Item3.BearishCount</span> Vote</strong></span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            @*First Column*@
+            <div class="col-xl-3">
+                <div class="card">
+                    <div class="card-body">
+                        @*<h3 class="mb-1"><i class="mdi mdi-bitcoin h1 text-warning align-middle mb-0 mr-2"></i>Fear & Greed Index</h3>
+                            <h6 class="text-muted mb-4">Multifactorial Crypto Market Sentiment Analysis</h6>
+                            <div id="gauge-chart" style="width:100%; height:280px;"></div>
+                            <h6 class="text-muted mt-4">source: alternative.me</h6>*@
+                        <img src="https://alternative.me/crypto/fear-and-greed-index.png" style="max-width: 100%; max-height: 100%;" alt="Latest Crypto Fear &amp; Greed Index">
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <h3 class="mb-4">Historical Values</h3>
+                        <input type="hidden" id="IP" />
+                        <ul class="list-group" data-simplebar style="height: 358px;">
+                            @foreach (var item in Model.Item1)
+                            {
+                                <li class="list-group-item">
+                                    <div class="media">
+                                        <div class="media-body">
+                                            <h5 class="font-size-16">@item.MeterDate</h5>
+                                            @if (item.MeterDate == "Last month")
+                                            {
+                                                <h5 class="font-size-14 text-success">@item.MeterType</h5>
+                                            }
+                                            else
+                                            {
+                                                <h5 class="font-size-14 text-warning">@item.MeterType</h5>
+                                            }
+
+                                        </div>
+                                        <div class="avatar-sm">
+                                            @if (item.MeterDate == "Last month")
+                                            {
+                                                <span class="avatar-title rounded-circle bg-light text-success font-size-20">
+                                                    @item.MeterVal
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="avatar-title rounded-circle bg-light text-warning font-size-20">
+                                                    @item.MeterVal
+                                                </span>
+                                            }
+
+                                        </div>
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <p class="text-muted mb-4"><img src="/assets/images/coins/btc.png" alt="Solana" style="width:32px; height:32px;" />  Bitcoin </p>
+
+                        <div class="row">
+                            <div class="col-6">
+                                <div>
+                                    <h5>$ <span id="btc_price">@(Math.Round(Model.Item2[0].Price, 3))</span></h5>
+                                    <p class="text-muted text-truncate mb-0"><span id="btc_change">+ 0.2 % </span> <i id="btc_arrow" class="mdi mdi-arrow-up ml-1 text-success"></i></p>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div>
+                                    <div id="area-sparkline-chart-1" class="apex-charts"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <p class="text-muted mb-4"><img src="/assets/images/coins/eth.png" alt="Ethereum" style="width:32px; height:32px;" />  Ethereum </p>
+
+                        <div class="row">
+                            <div class="col-6">
+                                <div>
+                                    <h5>$ <span id="eth_price">@(Math.Round(Model.Item2[1].Price, 3))</span></h5>
+                                    <p class="text-muted text-truncate mb-0"><span id="eth_change">+ 0.2 % </span> <i id="eth_arrow" class="mdi mdi-arrow-down ml-1 text-danger"></i></p>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div>
+                                    <div id="area-sparkline-chart-2" class="apex-charts"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <p class="text-muted mb-4"><img src="/assets/images/coins/luna.png" alt="Luna" style="width:32px; height:32px;" /> Luna </p>
+
+                        <div class="row">
+                            <div class="col-6">
+                                <div>
+                                    <h5>$ <span id="ltc_price">@(Math.Round(Model.Item2[2].Price, 3))</span></h5>
+                                    <p class="text-muted text-truncate mb-0"><span id="ltc_change">+ 0.1 %</span> <i id="ltc_arrow" class="mdi mdi-arrow-up ml-1 text-success"></i></p>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div>
+                                    <div id="area-sparkline-chart-3" class="apex-charts"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <script src="https://apps.elfsight.com/p/platform.js" defer></script>
+                        <div class="elfsight-app-197d7d69-eab7-4887-85cb-7f06cae4b1b3"></div>
+                    </div>
+                </div>
+            </div>
+            @*Second Column*@
+            <div class="col-xl-5 pr-2 pl-2">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-xl-12">
+                                <div class="table-responsive">
+                                    <table id="datatable" class="table table-hover dt-responsive nowrap" style="border-collapse: collapse; border-spacing: 0; width: 100%;">
+                                        <thead>
+                                            <tr>
+                                                <th>No</th>
+                                                <th class="px-0">Name</th>
+                                                <th class="pl-0">Price</th>
+                                                <th>Last 7 Days</th>
+                                                <th>24h Change</th>
+                                                <th>7d Change</th>
+                                                <th>24h Volume</th>
+                                                <th>MarketCap</th>
+                                            </tr>
+                                        </thead>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @*Third Column*@
+            <div class="col-xl-4">
+                <div class="card">
+                    <div class="card-body">
+                        <a data-height="3250" class="twitter-timeline" href="https://twitter.com/BTCTN?ref_src=twsrc%5Etfw">Tweets by BTCTN</a>
+                        <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (DetectionService.Device.Type != Wangkanai.Detection.Models.Device.Mobile && DetectionService.Device.Type != Wangkanai.Detection.Models.Device.Tablet)
+        {
+
+
+        }
+        else
+        {
+            <div class="row">
+                <div class="col-xl-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <a class="twitter-timeline" href="https://twitter.com/BTCTN?ref_src=twsrc%5Etfw">Tweets by BTCTN</a>
+                            <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+    </div>
+
+</div>
+
+
+<!-- end row -->
+<!-- JAVASCRIPT -->
+<script src="~/assets/libs/jquery/jquery.min.js"></script>
+<script src="~/assets/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="~/assets/libs/metismenu/metisMenu.min.js"></script>
+<script src="~/assets/libs/simplebar/simplebar.min.js"></script>
+<script src="~/assets/libs/node-waves/waves.min.js"></script>
+<script src="~/assets/js/lang/jquery.multiLanguage.js"></script>
+
+<!-- Required datatable js -->
+<script src="~/assets/libs/datatables.net/js/jquery.dataTables.min.js"></script>
+<script src="~/assets/libs/datatables.net-bs4/js/dataTables.bootstrap4.min.js"></script>
+
+<!-- Responsive examples -->
+<script src="~/assets/libs/datatables.net-responsive/js/dataTables.responsive.min.js"></script>
+<script src="~/assets/libs/datatables.net-responsive-bs4/js/responsive.bootstrap4.min.js"></script>
+
+<!-- apexcharts -->
+<script src="~/assets/libs/apexcharts/apexcharts.min.js"></script>
+
+<!-- echarts -->
+@*<script src="~/assets/libs/echarts/echarts.min.js"></script>*@
+
+<script src="~/assets/js/app.js"></script>
+<script>
+
+    var pageLength = 44;
+    try{
+        const isMobile = navigator.userAgentData.mobile;
+        if(isMobile){
+            pageLength = 44;
+        }
+    } catch {
+
+    }
+    var dtPrice = $("#datatable").DataTable({
+        "processing": true,
+        "serverSide": true,
+        "order": [[7, "desc"]],
+        "pageLength": pageLength,
+        "ajax": "/DashboardMeter/GetCoins",
+        "createdRow": function( row, data, dataIndex ) {
+            $(row).attr("id",data.symbol);
+        },
+        "columns": [
+            { 
+                'data': 'id',
+                render: function (data, type, row, meta) {
+                    return '&nbsp;' + (parseInt(meta.row) + parseInt(meta.settings._iDisplayStart) + 1);
+                }
+            },
+            {
+                'data': 'name',
+                'name': 'Name',
+                "autoWidth": true,
+                'render': function (data, type, row) {
+                    return "<img src='/assets/images/coins/"+ row.symbol.toLowerCase() +".png' alt='"+row.name+"' style='width:32px; height:32px; margin-top: auto; margin-bottom: auto;'><div class='d-block ml-2'><span class='font-weight-bold font-size-14'>"+ row.symbol +"</span><br><span class='font-size-12'>"+row.name+"</span></div>";
+                 }
+            },
+            { "data": "price", "name": "Price", "autoWidth": true,  render: $.fn.dataTable.render.number(',', '.', 3, '$')  },
+            {
+                'data': 'coinMarketID',
+                'name': 'coinMarketID',
+                'render': function (data, type, row) {
+                    var className = row.percentChange24H > 0 ? "isUp": "isDown" ;
+                    return "<img src='https://s3.coinmarketcap.com/generated/sparklines/web/7d/2781/"+ row.coinMarketID +".svg' alt='"+row.name+"' style='width:134px; height:46px;' class='" +className + "' >";
+                 }
+            },
+            {
+                "data": "percentChange24H",
+                "name": "PercentChange24H",
+                'render': function (data, type, row) {
+                    if (row.percentChange24H > 0)
+                    {
+                        return "<span class='text-success'>+" + parseFloat(parseFloat(row.percentChange24H).toFixed(2)) + "%</span>";
+                    }
+                    else
+                    {
+                        return "<span class='text-danger'>" +  parseFloat(parseFloat(row.percentChange24H).toFixed(2)) + "%</span>";
+                    }
+                }
+            },
+            {
+                "data": "percentChange7d",
+                "name": "PercentChange7d",
+                'render': function (data, type, row) {
+                    if (row.percentChange7d > 0)
+                    {
+                        return "<span class='text-success'>+" + parseFloat(parseFloat(row.percentChange7d).toFixed(2)) + "%</span>";
+                    }
+                    else
+                    {
+                        return "<span class='text-danger'>" +  parseFloat(parseFloat(row.percentChange7d).toFixed(2)) + "%</span>";
+                    }
+                }
+            },
+            { 
+                "data": "volume24H", 
+                "name": "Volume24H", 
+                "autoWidth": true,  
+                'render': function (data, type, row) {
+                    return '$' + numFormatter(row.volume24H)
+                } 
+            },
+            { 
+                "data": "marketCap", 
+                "name": "MarketCap", 
+                "autoWidth": true,  
+                'render': function (data, type, row) {
+                    return '$' + numFormatter(row.marketCap)
+                }  
+            }
+        ],
+        // draw own graph
+        //"drawCallback": function(settings) {
+        //    initDatatableApexChart();
+        //}
+    });
+
+    /*
+    function initDatatableApexChart(){
+        dtPrice.rows().every( function ( rowIdx, tableLoop, rowLoop ) {
+            var temp = this.data();
+            console.log(temp);
+            var options = {
+                series: [{
+                    name: temp['symbol'],
+                    data: temp['last7DaysData']
+                }],
+                chart: {
+                    type: "line",
+                    height: 40,
+                    sparkline: {
+                        enabled: !0
+                    }
+                },
+                stroke: {
+                    curve: "smooth",
+                    width: 1
+                },
+                colors: [temp['percentChange24H'] > 0 ? "#34c38f" : "#f46a6a"],
+                tooltip: {
+                    fixed: {
+                        enabled: !1
+                    },
+                    x: {
+                        show: !1
+                    },
+                    marker: {
+                        show: !1
+                    }
+                }
+            };
+            var apexChart = new ApexCharts(document.querySelector("#apex_" + temp['symbol'].toLowerCase()), options);
+            apexChart.render();
+        });
+    }
+    */
+    //var gaugeChart = echarts.init(document.getElementById('gauge-chart'));
+
+    // specify chart configuration item and data
+    var option = {
+        tooltip: {
+            formatter: "{a} {c}"
+        },
+        toolbox: {
+            show: false,
+        },
+        series: [
+            {
+                name: 'Meter',
+                type: 'gauge',
+                detail: { formatter: '{value}' },
+                data: [{ value: @ViewBag.Meter, name: '' }],
+                axisLine: {
+                    lineStyle: {
+                        color: [[0.2, '#55ce63'], [0.8, '#009efb'], [1, '#f62d51']],
+
+                    }
+                },
+
+            }
+        ]
+    };
+    //gaugeChart.setOption(option, true);
+    //$(window).on("resize", function () {
+    //    setTimeout(function () {
+    //        gaugeChart.resize()
+    //    }, 100);
+    //})
+
+    var socket;
+    var scheme = document.location.protocol === "https:" ? "wss" : "ws";
+    var port = document.location.port ? (":" + document.location.port) : "";
+    var connectionUrl = scheme + "://" + document.location.hostname + port + "/push";
+    console.log(connectionUrl);
+
+    function updateState() {
+        if (socket) {
+            switch (socket.readyState) {
+                case WebSocket.CLOSED:
+                    console.log("Closed");
+                    break;
+                case WebSocket.CLOSING:
+                    console.log("Closing...");
+                    break;
+                case WebSocket.CONNECTING:
+                    console.log("Connecting...");
+                    break;
+                case WebSocket.OPEN:
+                    console.log("Open");
+                    break;
+                default:
+                    console.log("Unknown WebSocket State: " + htmlEscape(socket.readyState));
+                    break;
+            }
+        }
+    }
+
+    var btcArr = [];
+    var ethArr = [];
+    var ltcArr = [];
+    window.onload = function () {
+        console.log("Connecting");
+        socket = new WebSocket(connectionUrl);
+
+        socket.onopen = function (event) {
+            updateState();
+        };
+
+
+        socket.onclose = function (event) {
+            updateState();
+        };
+
+        socket.onerror = updateState;
+
+        socket.onmessage = function (event) {
+            if(event.data){
+                var jsonData = JSON.parse(event.data);
+
+                for (var jsonPrice of jsonData) {
+                    if (jsonPrice.Symbol == "BTCUSDT") {
+                        updatePrice($("#btc_price"), $("#btc_arrow"), $("#btc_change"), jsonPrice);
+                        btcArr.push(jsonPrice.Close);
+                    } else if (jsonPrice.Symbol == "ETHUSDT") {
+                        updatePrice($("#eth_price"), $("#eth_arrow"), $("#eth_change"), jsonPrice);
+                        ethArr.push(jsonPrice.Close);
+                    } else if (jsonPrice.Symbol == "LUNAUSDT") {
+                        updatePrice($("#ltc_price"), $("#ltc_arrow"), $("#ltc_change"), jsonPrice);
+                        ltcArr.push(jsonPrice.Close);
+                    }
+                    var old_data = dtPrice.row("#" + jsonPrice.Symbol.replace("USDT", "")).data();
+                    if (old_data != undefined){
+                        old_data["price"] = parseFloat(jsonPrice.Close);
+                        old_data["percentChange24H"] = parseFloat(jsonPrice.PriceChangePercent);
+                        dtPrice.row("#" + jsonPrice.Symbol.replace("USDT", "")).data(old_data);
+                    }
+                }
+                //dtPrice.column( 'Price' ).cells().invalidate();
+            }
+
+        };
+    };
+
+    function numFormatter(num) {
+        if(num > 999 && num < 1000000){
+            return (num/1000).toFixed(2) + 'K'; // convert to K for number from > 1000 < 1 million 
+        }else if(num > 1000000 && num < 1000000000){
+            return (num/1000000).toFixed(2) + 'M'; // convert to M for number from > 1 million 
+        }else if(num > 1000000000){
+            return numberWithCommas((num/1000000000).toFixed(2)) + 'B'; // convert to B for number from > 1 billion 
+        }
+        else if(num < 900){
+            return num; // if value < 1000, nothing to do
+        }
+    }
+    function numberWithCommas(x) {
+        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+    function updatePrice($elemPrice, $elemArrow, $elemChange, jsonPrice) {
+        var change = jsonPrice.PriceChange;
+        if (change < 0) {
+            $elemArrow.removeClass("mdi-arrow-up");
+            $elemArrow.removeClass("text-success");
+            $elemArrow.addClass("mdi-arrow-down");
+            $elemArrow.addClass("text-danger");
+            $elemChange.html(`${parseFloat(jsonPrice.PriceChangePercent).toFixed(2)} % `);
+        } else {
+            $elemArrow.removeClass("mdi-arrow-down");
+            $elemArrow.removeClass("text-danger");
+            $elemArrow.addClass("mdi-arrow-up");
+            $elemArrow.addClass("text-success");
+            $elemChange.html(`+${parseFloat(jsonPrice.PriceChangePercent).toFixed(2)}`);
+        }
+        $elemPrice.html(parseFloat(jsonPrice.Close));
+    }
+
+    function htmlEscape(str) {
+        return str.toString()
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
+
+    initApexChart();
+
+    function initApexChart()
+    {
+        var options = {
+            series: [{
+                name: "BTC",
+                data: [12, 14, 2, 47, 42, 15, 47, 75, 65, 19, 14]
+            }],
+            chart: {
+                type: "area",
+                height: 40,
+                sparkline: {
+                    enabled: !0
+                }
+            },
+            stroke: {
+                curve: "smooth",
+                width: 2
+            },
+            colors: ["#f1b44c"],
+            fill: {
+                type: "gradient",
+                gradient: {
+                    shadeIntensity: 1,
+                    inverseColors: !1,
+                    opacityFrom: .45,
+                    opacityTo: .05,
+                    stops: [25, 100, 100, 100]
+                }
+            },
+            tooltip: {
+                fixed: {
+                    enabled: !1
+                },
+                x: {
+                    show: !1
+                },
+                marker: {
+                    show: !1
+                }
+            }
+        };
+
+        var btcChart = new ApexCharts(document.querySelector("#area-sparkline-chart-1"), options);
+        btcChart.render();
+
+        var ethOptions = {
+            series: [{
+                name: "ETH",
+                data: [25, 66, 41, 89, 63, 25, 44, 12, 36, 9, 54]
+            }],
+            chart: {
+                type: "area",
+                height: 40,
+                sparkline: {
+                    enabled: !0
+                }
+            },
+            stroke: {
+                curve: "smooth",
+                width: 2
+            },
+            colors: ["#3452e1"],
+            fill: {
+                type: "gradient",
+                gradient: {
+                    shadeIntensity: 1,
+                    inverseColors: !1,
+                    opacityFrom: .45,
+                    opacityTo: .05,
+                    stops: [25, 100, 100, 100]
+                }
+            },
+            tooltip: {
+                fixed: {
+                    enabled: !1
+                },
+                x: {
+                    show: !1
+                },
+                marker: {
+                    show: !1
+                }
+            }
+        };
+
+        var ethChart = new ApexCharts(document.querySelector("#area-sparkline-chart-2"), ethOptions);
+        ethChart.render();
+
+        var ltcOptions = {
+            series: [{
+                name: "SOL",
+                data: [35, 53, 93, 47, 54, 24, 47, 75, 65, 19, 14]
+            }],
+            chart: {
+                type: "area",
+                height: 40,
+                sparkline: {
+                    enabled: !0
+                }
+            },
+            stroke: {
+                curve: "smooth",
+                width: 2
+            },
+            colors: ["#50a5f1"],
+            fill: {
+                type: "gradient",
+                gradient: {
+                    shadeIntensity: 1,
+                    inverseColors: !1,
+                    opacityFrom: .45,
+                    opacityTo: .05,
+                    stops: [25, 100, 100, 100]
+                }
+            },
+            tooltip: {
+                fixed: {
+                    enabled: !1
+                },
+                x: {
+                    show: !1
+                },
+                marker: {
+                    show: !1
+                }
+            }
+        };
+
+        var ltcChart = new ApexCharts(document.querySelector("#area-sparkline-chart-3"), ltcOptions)
+        ltcChart.render();
+
+        setInterval(function () {
+            btcChart.updateSeries([{
+                data: btcArr.slice(Math.max(ethArr.length - 10, 1))
+            }])
+            ethChart.updateSeries([{
+                data: ethArr.slice(Math.max(ethArr.length - 10, 1))
+            }])
+            ltcChart.updateSeries([{
+                data: ltcArr.slice(Math.max(ltcArr.length - 10, 1))
+            }])
+        }, 1000)
+    }
+
+    function SaveEmotion(ctl) {
+        // Get product id from data- attribute
+        var emotionClicked = $(ctl).val();
+
+      $.getJSON("https://api.ipify.org?format=json", function (data) {
+
+
+        ip = document.getElementById('IP').value;
+        // Call Web API to get a list of Products
+        $.ajax({
+            url: "DashboardMeter/SaveEmotions",
+            type: 'POST',
+            dataType: "json",
+            data: { emotion: emotionClicked, IPAddress: data.ip },
+
+
+            success: function (response) {
+
+            },
+            error: function (response) {
+
+            }
+        });
+      })
+    }
+
+    $(document).ready(function(){
+        $(".btnUserEmotion").click(function(e){
+            $.ajax({
+                url : "DashboardMeter/SaveUserEmotion",
+                type: "POST",
+                data : { emotion: $(this).text() },
+                success: function(data, textStatus, jqXHR)
+                {
+                    $(".bearish-count").html(JSON.parse(data).BearishCount)
+                    $(".bullish-count").html(JSON.parse(data).BullishCount)
+                },
+                error: function (jqXHR, textStatus, errorThrown)
+                {
+                   alert(data);
+                }
+            });
+        });
+    });
+</script>
